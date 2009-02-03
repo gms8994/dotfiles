@@ -1,0 +1,166 @@
+##############################################################################
+# This is an example yaretrc file.  Please use 'yaret --help' for more options
+# and information about those options.
+#
+# This file has been set to the same defaults builtin to the yaret program
+# itself.  Please copy this file to ~/.yaretrc so that yaret will
+# automatically read from it.
+#
+# Additionally, select one ripper, one normalizer and at least one encoder,
+# before you try to use yaret (below).
+#
+# Also, you may want to check the output patterns, and change them to suit
+# your preferences.
+#
+# If you change them, realize that you cannot use multiple encoders
+# concurrently (at the same time), if both encoders use the same extension and
+# none of the output patterns include the ENCODER keyword.
+# (In otherwords, each encoder must create a unique filename).
+##############################################################################
+
+[output]
+#path "ENCODER/MAIN_ARTIST/ALBUM"
+path "ARTIST/ALBUM"
+name "TRACK_NUM - TRACK"
+# This setting affects the formatting of the TRACK_NUM keyword.
+# it is in the same format as printf and will be fed an integer (the current
+# track number).  You may use the letter 'X' to mean the length of the largest
+# track.  (i.e. "%Xd" would become "%3d" if there were between 100-999 tracks,
+# and would be "%2d" if there were 10-99, etc.)
+track_num_format "%02d"
+# This setting affects filenames generated:
+#trans "NOOP"
+#trans "tr/ /_/"
+# get rid of the + and every invalid character will map to an '_', otherwise
+# it will take several invalids and map to just one '_'.  e.g. "The Best! Music"
+# turns into "The_Best__Music" or "The_Best_Music" respectively.
+trans "s/[^a-zA-Z0-9-]+/ /g"
+
+# Oh, and change your [root] settings too!
+[root]
+final ~/Music
+work /tmp
+
+# The include option allows you to include other configuration files
+# or with a command line option (sometimes useful to automatically load cddb
+# settings for a CD).
+# Example:
+#  include test
+
+# Move those setting you do not want to the [nodisplay] section
+[display]
+date
+color
+clear
+alarm
+
+# Translated KEYWORDS:
+# YaRET supports several keywords that are translated.
+# Some are not available at all times (for instance FILE_IN and FILE_OUT are not
+# available when setting what the output name should be!)
+# 		Availability
+# Name:		[cddb]	[output]	[ripper]	[normalize]	[encoder]
+# ALBUM		Yes	Yes		No		No		Yes*
+# ARTIST	Yes	Yes		No		No		Yes*
+# BIT_RATE	No	Yes		No		No		Yes
+# CD_DEV	No	Yes		Yes		No		No
+# ENCODER	No	Yes		No		No		No
+# FILE_IN	No	No		No		No		Yes
+# FILE_LIST	No	No		No		Yes		No
+# FILE_OUT	No	No		Yes		No		Yes
+# QUALITY	No	Yes		No		No		Yes
+# GENRE		Yes	Yes		No		No		Yes*
+# TRACK		Yes	Yes		No		No		Yes*
+# TRACK_NUM	No	Yes		Yes		No		Yes*
+# YEAR		Yes	Yes		No		No		Yes*
+# Some notes about these KEYWORDS:
+# ENCODER is the label specified in the [encoder] section
+# FILE_IN is the input file given to the program to read
+# FILE_LIST is the list of files to be modified
+# FILE_OUT is the output file given the the program to write
+# In the [cddb] section, you are setting the values, not reading from them
+# In the section [output] you may prepend any valid [cddb] tag with the
+# word "MAIN_".  This has the effect of choosing the album's main tag, instead
+# of the track specific one.  Primarily useful for artist name.
+# e.g. it would choose "Various Artists" over track 1's "Ace of Base".
+
+# * NOTE:  These should be used for setting tagging information (e.g. ID3 tags)
+#          -not- for setting the output file name -- please use FILE_OUT for
+#          that.
+
+# Here you can override the information gathered via the cddb process (note
+# that the cddb library uses the ~/.cdserverrc file and ~/.cddb directory for
+# various configuration [and so we don't try to configure those things here])
+# This section is mainly useful by creating a separate file and including it
+# as configuration data via the --include command line option.
+# The only option you may want to set is the cddb_out option (which is a file
+# that is output at the end of the process that details the contents of the
+# cd).
+[cddb]
+out "ARTIST-ALBUM.info"
+# global options apply for the whole album
+#global ALBUM=Their First
+#global YEAR=1990
+#global GENRE=Pop
+#global ARTIST=Bare Naked Ladies
+# track options must be specified all in one line! (sorry!)
+#track 1=TRACK=Hello City
+#track 14=TRACK=Alone (Bonus Track) ARTIST=Heart
+
+# Only one may be specified (last one is used if more than one is specified)
+# (no default is selected)
+# cdparanoia and cddawav are already defined for you
+[ripper]
+use cdparanoia
+#use cddawav
+
+command cdparanoia=cdparanoia -z=50 -d CD_DEV TRACK_NUM FILE_OUT
+#command cddawav=cddawav -z -H -P 1 -t -D CD_DEV TRACK_NUM FILE_OUT
+
+# Only one may be specified (last one is used if more than one is specified)
+# (no default is selected)
+# normalize_album and normalize_track are already defined for you
+[normalize]
+#use normalize_album
+#use normalize_track
+use no_normalize
+
+
+#command normalize_album=normalize -b -q FILE_LIST
+#type normalize_album=ALBUM
+#command normalize_track=normalize -q FILE_LIST
+#type normalize_track=TRACK
+command no_normalize=true
+type no_normalize=TRACK
+
+# You can specify multiple encoders here, but make sure you include the word
+# ENCODER somewhere in the [output] section (above) to make the output files
+# unique.
+# (no default is selected)
+# wav, lame, bladeenc, oggenc and flac are already defined for you
+[encoder]
+#use wav
+#use lame
+#use bladeenc
+#use oggenc
+use flac
+# These two below require you to copy the two *_cushion.pl files that are in
+# the contrib/ directory to somewhere in your path.
+#use my_flac
+#use my_ogg
+
+#command wav=true
+#extension wav=.wav
+#command lame=lame --quiet -q QUALITY -t -p -b BIT_RATE -m j --tt TRACK --ta ARTIST --tl ALBUM --ty YEAR --tg GENRE --tn TRACK_NUM FILE_IN FILE_OUT
+#bitrate lame=128
+#quality lame=5
+#extension lame=.mp3
+#command bladeenc=bladeenc -crc -q -quiet -br BIT_RATE FILE_IN FILE_OUT
+#bitrate bladeenc=128
+#extension bladeenc=.mp3
+#command oggenc=oggenc -q QUALITY -o FILE_OUT -d YEAR -N TRACK_NUM -t TRACK -l ALBUM -a ARTIST -G GENRE FILE_IN
+#quality oggenc=3
+#extension oggenc=.ogg
+command flac=flac -o FILE_OUT -QUALITY FILE_IN
+quality flac=0
+extension flac=.flac

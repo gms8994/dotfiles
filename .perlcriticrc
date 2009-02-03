@@ -1,0 +1,10 @@
+severity = 2
+top = 5
+exclude = Editor::RequireEmacsFileVariables
+
+[ControlStructures::ProhibitPostfixControls]
+allow = if while unless
+severity = 4
+
+[Variables::ProhibitPunctuationVars]
+allow = $@ $!
